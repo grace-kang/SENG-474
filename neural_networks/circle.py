@@ -16,22 +16,29 @@ NUM_BATCH = 500
 BATCH_SIZE = 256
 PRINT_INTERVAL = 20
 
-# A simple framework to work with pytorch
+# Feed forward neural network with 2 hidden layers
 class Classifier(nn.Module):
-    def __init__(self, size_in):
+    def __init__(self):
         super(Classifier, self).__init__()
-        self.fc1 = nn.Linear(size_in, 500) 
+        self.fc1 = nn.Linear(2, 400) 
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(500, 1)  
+        self.fc2 = nn.Linear(400, 400)
+        self.fc3 = nn.Linear(400, 400)
+        self.fc4 = nn.Linear(400, 1)
+        #self.fc5 = nn.Linear(100, 1)
     def forward(self, x):
-        out = self.fc1(x)
-        out = self.relu(out)
-        out = self.fc2(out)
-        return F.sigmoid(out)
+        x = x.view(-1, 2)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+        x = self.fc4(x)
 
-# may be of use to you
-# returns the percentage of predictions (greater than threshold) 
-# that are equal to the labels provided
+        return F.sigmoid(x)
+
+
 def percentage_correct(pred, labels, threshold = 0.5):
     correct = 0.0
 
@@ -65,19 +72,15 @@ def plot_decision_boundary(data_in, preds):
     plt.scatter(x,y,c=colour)
     plt.title("Decision Boundary of a Neural Net Trained to Classify the Unit Circle")
     plt.show()
-    # May be of use for saving your plot:    plt.savefig(filename)
+    #plt.savefig(filename)
 
-def plot_percent_correct(correct, iterations):
-    plt.plot(correct, iterations, 'bo')
+def plot_percent_correct(correct):
+    plt.plot(correct)
     plt.title("Percent Correct VS Iteration Number")
     plt.show()
 
 
-
-# Here's the spot where you'll do your batches of optimization
-data, labels = get_batch(BATCH_SIZE)
-model = Classifier(data.size(1))
-model.train()
+model = Classifier()
 
 o = torch.optim.SGD(model.parameters(), lr = 0.001)
 loss = nn.BCELoss()
@@ -89,15 +92,19 @@ for i in range(NUM_BATCH):
     iterations.append(i)
     data, labels = get_batch(BATCH_SIZE)
     pred = model(data)
+    print ("percent correct: ", percentage_correct(pred, labels))
     correct.append(percentage_correct(pred, labels))
     error = loss(pred, labels)
     error.backward()
     o.step()
 
-# plot decision boundary for new data
 d, labels = get_batch(BATCH_SIZE)
-plot_decision_boundary(d, model(d))
-#plot_percent_correct(correct, iterations)
+#plot_decision_boundary(d, model(d))
+plot_percent_correct(correct)
+
+
+
+
 
 
 
